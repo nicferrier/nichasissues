@@ -41,7 +41,7 @@ function makeIssuePoster(listener) {
 }
 
 async function test() {
-    const [app, listener, dbConfigPromise] = await pgLogApi.main(8027);
+    const [app, listener, dbConfigPromise] = await pgLogApi.main();
     const dbConfig = await dbConfigPromise;
 
     try {
