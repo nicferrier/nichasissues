@@ -104,8 +104,8 @@ async function requestPasswordFromKeepie(listener, path) {
     const hostName = address == "::" ? "localhost" : address;
     const receiptUrl = `http://${hostName}:${port}${path}`;
     const keepieUrl = process.env.KEEPIEURL;
-    console.log("KEEPIEURL", keepieUrl);
     const {hostname, port: keepiePort, pathname} = url.parse(keepieUrl);
+    // We also get the issuedb from the KeepieUrl
     issueSender.setPort(keepiePort);
     const request = {
         method: "POST",
