@@ -2,14 +2,28 @@
   "name": "test-pglogapi",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "id.js",
+  "dependencies": {
+    "body-parser": "^1.18.3",
+    "express": "^4.16.4",
+    "pg-log-api": "^0.0.4"
+  },
+  "devDependencies": {
+    "rewire": "^4.0.1"
+  },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nicferrier/nichasissues.git"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "dependencies": {
-    "pg-log-api": "file:../pglogapi"
-  }
+  "bugs": {
+    "url": "https://github.com/nicferrier/nichasissues/issues"
+  },
+  "homepage": "https://github.com/nicferrier/nichasissues#readme"
 }

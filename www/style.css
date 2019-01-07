@@ -1,0 +1,17 @@
+body {
+    font-family: sans-serif;
+}
+
+form {
+    display: block;
+    width: 30%;
+    align: right;
+}
+
+form .data {
+    display: block;
+    width: 100%;
+    font-family: sans-serif;
+    font-size: 10pt;
+}
+
