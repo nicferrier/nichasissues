@@ -6,6 +6,7 @@ const path = require("path");
 
 exports.boot = async function (port) {
     if (process.env["ISSUEDB_KEEPIE_WRITE"] === undefined) {
+        console.log("setting ISSUEDB_KEEPIE_WRITE");
         process.env["ISSUEDB_KEEPIE_WRITE"] = path.join(__dirname, "authorized-urls-write.json");
     }
 
@@ -16,7 +17,8 @@ exports.boot = async function (port) {
     const [app, listener, dbConfigPromise] = await pgLogApi.main(port, {
         dbDir: path.join(__dirname, "issue-dbdir"),
         keepieAuthorizedForWriteEnvVar: "ISSUEDB_KEEPIE_WRITE",
-        keepieAuthorizedForReadOnlyEnvVar: "ISSUEDB_KEEPIE_READONLY"
+        keepieAuthorizedForReadOnlyEnvVar: "ISSUEDB_KEEPIE_READONLY",
+        keepieTime: 1000
     });
     const dbConfig = await dbConfigPromise;
 
@@ -29,8 +31,13 @@ exports.boot = async function (port) {
         res.sendStatus(204);
     });
 
+    app.get("/issue", async (req, res) => {
+        console.log("issue request");
+        const issueRs = await app.db.query("select * from issue;");
+        res.json(issueRs.rows);
+    });
+
     app.post("/issue", function (req, res) {
-        console.log("issue POST!");
         try {
             res.sendStatus(204);
         }

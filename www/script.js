@@ -1,5 +1,5 @@
 
-window.addEventListener("load", loadEvt => {
+window.addEventListener("load", async loadEvt => {
     console.log(`
  __    _  ___   _______    __   __  _______  _______    ___   _______  _______  __   __  _______  _______ 
 |  |  | ||   | |       |  |  | |  ||   _   ||       |  |   | |       ||       ||  | |  ||       ||       |
@@ -25,5 +25,27 @@ window.addEventListener("load", loadEvt => {
         });
         console.log(response);
         return false;
+    });
+
+    const baseUrl = document.location.href;
+    const response = await fetch(baseUrl + "/issue");
+    const jsonData = await response.json();
+    const data = JSON.parse(jsonData);
+    console.log(data);
+    const issueElements = data.map(issue => {
+        const {id,d,data: {summary, description, editor}} = issue;
+        const issueElement = document.createElement("table");
+        const tr = issueElement.appendChild(document.createElement("tr"));
+        const tdSummary = tr.appendChild(document.createElement("td"));
+        tdSummary.classList.add("summary");
+        tdSummary.textContent = summary;
+        const tdDescription = tr.appendChild(document.createElement("td"));
+        tdDescription.classList.add("description");
+        tdDescription.textContent = description;
+        return issueElement;
+    });
+    const top = document.querySelector(".top-issues");
+    issueElements.forEach(issue => {
+        top.appendChild(issue);
     });
 });

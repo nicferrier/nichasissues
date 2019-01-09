@@ -1,10 +1,11 @@
 {
-  "name": "test-pglogapi",
+  "name": "issue-pglogapi",
   "version": "1.0.0",
-  "description": "",
+  "description": "A pglogapi instance for issue data.",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "boot": "boot.js"
   },
   "keywords": [],
   "author": "",

@@ -4,7 +4,7 @@ body {
 
 form {
     display: block;
-    width: 30%;
+    width: 50%;
     align: right;
 }
 
@@ -15,3 +15,15 @@ form .data {
     font-size: 10pt;
 }
 
+section table {
+    table-layout: fixed;
+    width: 95%;
+    border-collapse: collapse;
+    border: 1px solid;
+}
+
+section table td {
+    border: 1px solid;
+}
+
+/* End */
