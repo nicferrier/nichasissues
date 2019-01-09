@@ -4,6 +4,15 @@
 * ~display top issues~
 * ~test that the created issue is the top issue~
 * edit an issue
+* subscribe to the log
+
+## people
+
+* a people database
+
+## artifacts
+
+* an artifact database
 
 ## pglogapi
 
