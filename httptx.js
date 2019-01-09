@@ -2,6 +2,8 @@ const http = require("http");
 const url = require("url");
 const stream = require("stream");
 
+const DEBUG=false;
+
 const httpRequest = async function (targetUrl, options={}) {
     const {method="GET", auth, headers, requestBody} = options;
     const urlObj = url.parse(targetUrl);
@@ -14,10 +16,14 @@ const httpRequest = async function (targetUrl, options={}) {
     };
     const authedRequest = (auth !== undefined) ? Object.assign({auth:auth}, request) : request;
     const headeredRequest = (headers !== undefined) ? Object.assign({headers: headers}, authedRequest) : authedRequest;
-    console.log("httptx", targetUrl, headeredRequest);
+    if (DEBUG) {
+        console.log("httptx", targetUrl, headeredRequest);
+    }
     const response = new Promise((resolve, reject) => {
         const httpTx = http.request(headeredRequest, response => {
-            console.log("httptx", targetUrl, response.statusCode);
+            if (DEBUG) {
+                console.log("httptx", targetUrl, response.statusCode);
+            }
             const returnObject = {
                 statusCode: response.statusCode,
                 body: function () {
