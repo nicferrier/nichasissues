@@ -17,13 +17,30 @@ form .data {
 
 section table {
     table-layout: fixed;
-    width: 95%;
+    width: 100%;
     border-collapse: collapse;
     border: 1px solid;
 }
 
-section table td {
+section table tr {
+    width: 100%;
+}
+
+section table td,th {
     border: 1px solid;
+    vertical-align: top;
+    padding: 5px;
+    display: inner-block;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+section table tr td.date,th.date {
+    width: 60px;
+}
+
+section table tr td.summary,th.summary {
+    width: 120px;
 }
 
 /* End */
