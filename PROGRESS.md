@@ -8,7 +8,7 @@
 
 ## people
 
-* a people database
+* add a pglogapi for users
 
 ## artifacts
 
