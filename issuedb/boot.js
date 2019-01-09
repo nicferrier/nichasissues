@@ -19,11 +19,6 @@ exports.boot = async function (port) {
     });
     const dbConfig = await dbConfigPromise;
 
-    process.on("SIGINT", exitCode => {  //FIXME! Don't seem to be able to set this in pglogapi/boot.js
-        dbConfig.pgProcess.kill("SIGINT");
-        process.exit();
-    });
-
     app.post("/something", function (req,res) {
         res.sendStatus(204);
     });
