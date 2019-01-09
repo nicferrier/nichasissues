@@ -88,7 +88,7 @@ app.get("/issue/top", async (req, res) => {
     const response = await issueApi.issues();
     const body = await response.body();
     const data = JSON.parse(body);
-    res.json(data);
+    res.json(data.splice(0,5));
 });
 
 const formHandler = bodyParser.urlencoded({extended: true});
