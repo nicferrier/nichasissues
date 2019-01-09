@@ -33,7 +33,7 @@ exports.boot = async function (port) {
 
     app.get("/issue", async (req, res) => {
         console.log("issue request");
-        const issueRs = await app.db.query("select * from issue;");
+        const issueRs = await app.db.query("select * from issue order by last_update desc");
         res.json(issueRs.rows);
     });
 
