@@ -19,22 +19,10 @@ exports.boot = async function (port) {
     });
     const dbConfig = await dbConfigPromise;
 
-    app.post("/something", function (req,res) {
-        res.sendStatus(204);
-    });
-
     app.get("/issue", async (req, res) => {
         console.log("issue request");
         const issueRs = await app.db.query("select * from issue order by last_update desc");
         res.json(issueRs.rows);
-    });
-
-    app.post("/issue", function (req, res) {
-        try {
-            res.sendStatus(204);
-        }
-        catch (e) {
-        }
     });
     return listener;
 }
