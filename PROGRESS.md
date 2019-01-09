@@ -1,8 +1,8 @@
 ## issues
 
 * ~create an issue~
-* display top issues
-* test that the created issue is the top issue
+* ~display top issues~
+* ~test that the created issue is the top issue~
 * edit an issue
 
 ## pglogapi
