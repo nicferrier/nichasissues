@@ -7,6 +7,7 @@ const url = require("url");
 const querystring = require("querystring");
 const http = require("http");
 const stream = require("stream");
+const httpRequest = require("./httptx.js");
 
 const server = rewire("./server.js");
 const serverIssueApi = server.__get__("issueApi");
@@ -41,39 +42,33 @@ async function test() {
     });
 
     console.log("password arrived!", serverPassword);
-    // now we can test a post
-    const [responseStatus, responseData] = await new Promise((resolve, reject) => {
-        const formData = querystring.stringify({
-            summary: "this is outrageous!",
-            description: "I have been writing javascript code for 2 years and have now discovered it is single threaded.",
-            editor: "nicferrier"
-        });
-        const request = {
-            method: "POST",
-            host: "localhost",
-            port: serverListener.address().port,
-            path: "/issue",
-            headers: {
-                "content-type": "application/x-www-form-urlencoded",
-                "content-length": Buffer.byteLength(formData)
-            }
-        };
-        let buffer = "";
-        http.request(request, function (response) {
-            response.pipe(new stream.Writable({
-                write(chunk, encoding, next) {
-                    buffer = buffer + chunk;
-                    next();
-                },
-                final(next) {
-                    resolve([response.statusCode, buffer]);
-                }
-            }));
-        }).end(formData);
-    });
 
-    console.log("response", responseStatus, responseData);
-    
+    // now we can test a post
+    const formData = querystring.stringify({
+        summary: "this is outrageous!",
+        description: "I have been writing javascript code for 2 years and have now discovered it is single threaded.",
+        editor: "nicferrier"
+    });
+    const serverPort = serverListener.address().port;
+    const issueUrl = `http://localhost:${serverPort}/issue`;
+    const response = await httpRequest(issueUrl, {
+        method: "POST",
+        headers: {
+            "content-type": "application/x-www-form-urlencoded",
+            "content-length": Buffer.byteLength(formData)
+        },
+        requestBody: formData
+    });
+    console.log("response", response);
+    const body = await response.body();
+    const data = JSON.parse(body);
+    console.log("response", response.statusCode, data);
+
+    const topIssuesResponse = await httpRequest(issueUrl + "/top");
+    const topIssuesBody = await topIssuesResponse.body();
+    const topIssuesData = JSON.parse(topIssuesBody);
+    console.log(topIssuesData);
+
     // Finally, let's...
     issueDbProcess.kill("SIGINT");
     serverListener.close();

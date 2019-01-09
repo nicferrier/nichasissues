@@ -28,7 +28,7 @@ window.addEventListener("load", async loadEvt => {
     });
 
     const baseUrl = document.location.href;
-    const response = await fetch(baseUrl + "/issue");
+    const response = await fetch(baseUrl + "/top");
     const jsonData = await response.json();
     const data = JSON.parse(jsonData);
     console.log(data);
@@ -44,6 +44,7 @@ window.addEventListener("load", async loadEvt => {
         tdDescription.textContent = description;
         return issueElement;
     });
+
     const top = document.querySelector(".top-issues");
     issueElements.forEach(issue => {
         top.appendChild(issue);

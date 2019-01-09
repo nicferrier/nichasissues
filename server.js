@@ -5,54 +5,12 @@ const http = require("http");
 const multer = require("multer");
 const stream = require("stream");
 const url = require("url");
+const httpRequest = require("./httptx.js");
 
 const app = express();
 const upload = multer();
 
 // quick simple fetch style promise http client
-const httpRequest = async function (targetUrl, options={}) {
-    const {method="GET", auth, headers, requestBody} = options;
-    const urlObj = url.parse(targetUrl);
-    const {hostname, port: targetPort, path} = urlObj;
-    const request = {
-        method: method,
-        host: hostname,
-        port: targetPort,
-        path: path
-    };
-    const authedRequest = (auth !== undefined) ? Object.assign({auth:auth}, request) : request;
-    const headeredRequest = (headers !== undefined) ? Object.assign({headers: headers}, authedRequest) : authedRequest;
-    console.log("@@@>>> headeredRequest", headeredRequest);
-    const response = new Promise((resolve, reject) => {
-        const httpTx = http.request(headeredRequest, response => {
-            const returnObject = {
-                statusCode: response.statusCode,
-                body: function () {
-                    return new Promise((bodyResolve, bodyReject) => {
-                        let buffer = "";
-                        response.pipe(new stream.Writable({
-                            write(chunk, encoding, next) {
-                                buffer = buffer + chunk;
-                                next();
-                            },
-                            final(next) {
-                                bodyResolve(buffer);
-                            }
-                        }));
-                    });
-                }
-            };
-            resolve(returnObject);
-        });
-        if (requestBody !== undefined) {
-            httpTx.end(requestBody);
-        }
-        else {
-            httpTx.end();
-        }
-    });
-    return response;
-};
 
 class IssueAPI {
     constructor() {
@@ -128,13 +86,15 @@ app.get("/issue", function (req, res) {
 
 app.get("/issue/top", async (req, res) => {
     const response = await issueApi.issues();
-    const jsonData = await response.body();
-    res.json(jsonData);
+    const body = await response.body();
+    const data = JSON.parse(body);
+    res.json(data);
 });
 
 const formHandler = bodyParser.urlencoded({extended: true});
 app.post("/issue", formHandler, async function (req, res) {
     try {
+        console.log("issue handler", req.body);
         const {summary, description, editor} = req.body;
         const edit = new Date();
         const editTime = edit.valueOf();
@@ -163,41 +123,15 @@ async function requestStatusKeeperKeepie() {
     if (process.env.STATUS_KEEPER_URL === undefined) {
         return undefined;
     }
-    const {hostname, port, pathname} = url.parse(process.env.STATUS_KEEPER_URL);
-    const request = {
-        method: "GET",
-        host: hostname,
-        port: port,
-        path: pathname
-    };
-    const [error, keeperData] = await new Promise((resolve, reject) => {
-        http.request(request, function (response) {
-            // console.log("response from", request, response.statusCode);
-            let buffer = "";
-            response.pipe(stream.Writable({
-                write(chunk, encoding, next) {
-                    buffer = buffer + chunk;
-                    next();
-                },
-                final(next) {
-                    try {
-                        if (response.statusCode != 200) {
-                            throw new Error(`bad response: ${response.statusCode}`);
-                        }
-                        const jsonData = JSON.parse(buffer);
-                        resolve([undefined, jsonData]);
-                    }
-                    catch (e) {
-                        reject([e]);
-                    }
-                    next();
-                }
-            }));
-        }).end();
-    });
-    const { scripts: {"issue-pglogapi": {keepieUrl}} } = keeperData;
-    console.log("StatusKeeper's pgLogApi keepieUrl", keepieUrl);
-    return keepieUrl;
+    const response = await httpRequest(process.env.STATUS_KEEPER_URL);
+    if (response.statusCode == 200) {
+        const keeperBody = await response.body();
+        const keeperData = JSON.parse(keeperBody);
+        const { scripts: {"issue-pglogapi": {keepieUrl}} } = keeperData;
+        console.log("StatusKeeper's pgLogApi keepieUrl", keepieUrl);
+        return keepieUrl;
+    }
+    return undefined;
 }
 
 async function requestPasswordFromKeepie(listener, path) {

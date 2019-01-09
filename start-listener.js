@@ -35,12 +35,16 @@ const start = async function(scriptName, prefixOut=undefined) {
     const dir = path.dirname(scriptName);
     const script = path.basename(scriptName);
     const nodeBin = process.argv[0];
-    child = spawn(nodeBin, [script], {cwd: dir});
+    child = spawn(nodeBin, [script], {
+        cwd: dir,
+        env: Object.assign({"PGLOGLEVEL": "notice"}, process.env)
+    });
     childCount++;
     console.log("spawning", script, dir, "prefix=", prefixOut);
     const [listeningPort, piped] = await new Promise(async (resolve, reject) => {
         child.stderr.pipe(process.stderr);
         child.on("listening", resolve);
+        // For test we want to not hang on the keeperListener
         child.on("exit", _ => {
             childCount--;
             if (childCount == 0) {
