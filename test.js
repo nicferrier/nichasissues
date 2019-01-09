@@ -8,10 +8,20 @@ const querystring = require("querystring");
 const http = require("http");
 const stream = require("stream");
 const httpRequest = require("./httptx.js");
+const assert = require("assert");
 
 const server = rewire("./server.js");
 const serverIssueApi = server.__get__("issueApi");
 const serverBoot = server.__get__("boot");
+
+function jparse(source) {
+    try {
+        return [undefined, JSON.parse(source)];
+    }
+    catch (e) {
+        return [e];
+    }
+}
 
 async function test() {
     // Set environment variable to point at keepie auth file
@@ -44,11 +54,20 @@ async function test() {
     console.log("password arrived!", serverPassword);
 
     // now we can test a post
-    const formData = querystring.stringify({
-        summary: "this is outrageous!",
+    const statuses = [
+        "it's broken",
+        "it's bad",
+        "c'est merde",
+        "petit merde",
+        "all gorn"
+    ];
+    const status = statuses[Math.floor(Math.random() * Math.floor(statuses.length))];
+    const updateData = {
+        summary: status,
         description: "I have been writing javascript code for 2 years and have now discovered it is single threaded.",
         editor: "nicferrier"
-    });
+    };
+    const formData = querystring.stringify(updateData);
     const serverPort = serverListener.address().port;
     const issueUrl = `http://localhost:${serverPort}/issue`;
     const response = await httpRequest(issueUrl, {
@@ -59,15 +78,18 @@ async function test() {
         },
         requestBody: formData
     });
-    console.log("response", response);
     const body = await response.body();
-    const data = JSON.parse(body);
-    console.log("response", response.statusCode, data);
+    const [createIssueJsonError, createdIssueData] = jparse(body);
+    assert(createIssueJsonError === undefined, `create issue json does not parse: ${createIssueJsonError} ${createdIssueData}`);
+    assert(response.statusCode == 201, `create issue response was not 201: ${response}`);
 
+    console.log(createdIssueData);
+    
     const topIssuesResponse = await httpRequest(issueUrl + "/top");
     const topIssuesBody = await topIssuesResponse.body();
-    const topIssuesData = JSON.parse(topIssuesBody);
-    console.log(topIssuesData);
+    const [topIssuesJsonError, topIssuesData] = jparse(topIssuesBody);
+    assert(topIssuesJsonError === undefined, `top issues json does not parse: ${topIssuesJsonError} ${topIssuesBody}`);
+    assert(topIssuesData[0].id == createdIssueData[0].log_insert, `top issue is not what we just created: ${topIssuesData[0]}`);
 
     // Finally, let's...
     issueDbProcess.kill("SIGINT");
