@@ -68,6 +68,19 @@ app.post("/issuedb-secret", upload.array(), function (req, res) {
     }
 });
 
+app.post("/userdb-secret", upload.array(), function (req, res) {
+    try {
+        const {name: serviceName, password} = req.body;
+        console.log("keepie secret received for:", serviceName);
+        issueApi.setPassword(password);
+        res.sendStatus(204);
+    }
+    catch (e) {
+        res.sendStatus(400);
+    }
+});
+
+
 app.use("/www", express.static(path.join(__dirname, "www")));
 
 app.get("/status", (req, res) => {
@@ -127,9 +140,18 @@ async function requestStatusKeeperKeepie() {
     if (response.statusCode == 200) {
         const keeperBody = await response.body();
         const keeperData = JSON.parse(keeperBody);
-        const { scripts: {"issue-pglogapi": {keepieUrl}} } = keeperData;
-        console.log("StatusKeeper's pgLogApi keepieUrl", keepieUrl);
-        return keepieUrl;
+        const {
+            scripts: {
+                "issue-pglogapi": {keepieUrl:issuedbKeepieUrl},
+                "issue-userdb": {keepieUrl:userdbKeepieUrl}
+            }
+        } = keeperData;
+        const keepies = {
+            issuedb:issuedbKeepieUrl,
+            userdb:userdbKeepieUrl
+        };
+        console.log("StatusKeeper's keepieUrls", keepies);
+        return keepies;
     }
     return undefined;
 }

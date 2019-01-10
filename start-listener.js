@@ -148,7 +148,7 @@ const startAll = async function (dir=process.cwd()) {
 
 if (require.main === module) {
     const scripts = process.argv.slice(2);
-    if (scripts !== undefined) {
+    if (scripts !== undefined && scripts.length > 0) {
         const run = async (scripts, stdout) => {
             const [bootScript, ...otherScripts] = scripts;
             if (bootScript !== undefined) {
