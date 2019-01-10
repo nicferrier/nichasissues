@@ -8,7 +8,8 @@
 
 ## people
 
-* add a pglogapi for users
+* ~add a pglogapi for users~
+* sort out server.js with multiple APIs - multiple API classes?
 
 ## artifacts
 
