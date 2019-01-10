@@ -17,4 +17,6 @@
 
 ## pglogapi
 
+* add clustering - where is the list of cluster members coming from?
+ * each cluster member should be keepied?
 * allow a per app app-sql directory and searching, like the sql-scripts feature
