@@ -20,7 +20,6 @@ exports.boot = async function (port) {
     const dbConfig = await dbConfigPromise;
 
     app.get("/issue", async (req, res) => {
-        console.log("issue request");
         const issueRs = await app.db.query("select * from issue order by last_update desc");
         res.json(issueRs.rows);
     });
