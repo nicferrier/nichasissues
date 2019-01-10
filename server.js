@@ -6,6 +6,7 @@ const multer = require("multer");
 const stream = require("stream");
 const url = require("url");
 const httpRequest = require("./httptx.js");
+const crypto = require("crypto");
 
 const app = express();
 const upload = multer();
@@ -104,6 +105,16 @@ app.get("/issue/top", async (req, res) => {
     res.json(data.splice(0,5));
 });
 
+
+function cryptit() {
+    return new Promise((resolve, reject) => {
+        crypto.pseudoRandomBytes(16, function(err, raw) {
+            if (err) reject(err);
+            else resolve(raw.toString("hex"));
+        });
+    });
+}
+
 const formHandler = bodyParser.urlencoded({extended: true});
 app.post("/issue", formHandler, async function (req, res) {
     try {
@@ -112,6 +123,8 @@ app.post("/issue", formHandler, async function (req, res) {
         const edit = new Date();
         const editTime = edit.valueOf();
         const struct = {
+            issueid: await cryptit(),
+            state: "OPEN",
             summary: summary,
             description: description,
             editor: editor,
@@ -151,7 +164,7 @@ async function requestStatusKeeperKeepie() {
             userdb:userdbKeepieUrl
         };
         console.log("StatusKeeper's keepieUrls", keepies);
-        return keepies;
+        return keepies.issuedb; // FIXME!!
     }
     return undefined;
 }

@@ -1,51 +1,29 @@
-function mkel(name, parent) {
-    if (parent !== undefined) {
-        return parent.appendChild(document.createElement(name));
-    }
-    else {
-        return document.createElement(name);
-    }
-}
-
-function narrowingDate(time) {
-    const getMonthString = function (time) {
-        console.log("getMonth");
-        const years = time.getFullYear();
-        const months = "" + time.getMonth() + 1;
-        return `${years}-${months.padStart(2, "0")}`;
-    };
-    const getDayString = function (time) {
-        console.log("getDay");
-        const months = "" + time.getMonth() + 1;
-        const days = "" + time.getDate();
-        return `${months.padStart(2, "0")}-${days.padStart(2, "0")}`;
-    };
-    const now = new Date();
-    const hours = "" + time.getHours();
-    const minutes = "" + time.getMinutes();
-    const timeString = `${hours.padStart(2, "0")}:${minutes.padStart(2, "0")}`;
-
-    const epoch = time.valueOf();
-    const oneDayMs = (1000 * 60 * 60 * 24);
-    const oneYearMs = (1000 * 60 * 60 * 24 * 365);
-    const timeMs = now.valueOf();
-    const longString = (epoch < timeMs - oneYearMs)
-          ? getMonthString(time)
-          : (epoch < timeMs - oneDayMs)
-          ? getDayString(time)
-          : timeString;
-    return longString;
-}
+import narrowingDate from "./narrow-date.js";
+import {mkel} from "./dom.js";
 
 window.addEventListener("load", async loadEvt => {
     console.log(`
- __    _  ___   _______    __   __  _______  _______    ___   _______  _______  __   __  _______  _______ 
-|  |  | ||   | |       |  |  | |  ||   _   ||       |  |   | |       ||       ||  | |  ||       ||       |
-|   |_| ||   | |       |  |  |_|  ||  |_|  ||  _____|  |   | |  _____||  _____||  | |  ||    ___||  _____|
-|       ||   | |       |  |       ||       || |_____   |   | | |_____ | |_____ |  |_|  ||   |___ | |_____ 
-|  _    ||   | |      _|  |       ||       ||_____  |  |   | |_____  ||_____  ||       ||    ___||_____  |
-| | |   ||   | |     |_   |   _   ||   _   | _____| |  |   |  _____| | _____| ||       ||   |___  _____| |
-|_|  |__||___| |_______|  |__| |__||__| |__||_______|  |___| |_______||_______||_______||_______||_______|
+ __    _  ___   _______  
+|  |  | ||   | |       | 
+|   |_| ||   | |       | 
+|       ||   | |       | 
+|  _    ||   | |      _| 
+| | |   ||   | |     |_  
+|_|  |__||___| |_______| 
+ __   __  _______  _______  
+|  | |  ||   _   ||       | 
+|  |_|  ||  |_|  ||  _____| 
+|       ||       || |_____  
+|       ||       ||_____  | 
+|   _   ||   _   | _____| | 
+|__| |__||__| |__||_______| 
+ ___   _______  _______  __   __  _______  _______ 
+|   | |       ||       ||  | |  ||       ||       |
+|   | |  _____||  _____||  | |  ||    ___||  _____|
+|   | | |_____ | |_____ |  |_|  ||   |___ | |_____ 
+|   | |_____  ||_____  ||       ||    ___||_____  |
+|   |  _____| | _____| ||       ||   |___  _____| |
+|___| |_______||_______||_______||_______||_______|
 `);
     console.log("an issue tracking system without any bells and no whistles at all.");
     const user = "nicferrier";
@@ -71,12 +49,18 @@ window.addEventListener("load", async loadEvt => {
     const data = jsonData; // JSON.parse(jsonData);
     console.log(data);
     const issueElements = data.map(issue => {
-        const {id,d,last_update,data: {summary, description, editor}} = issue;
+        const {id, d, last_update, state, data: {
+            issueid, summary, description, editor
+        }} = issue;
         const tr = mkel("tr");
+        tr.id = issueid;
         const tdDate = mkel("td", tr);
         tdDate.classList.add("date");
         const date = narrowingDate(new Date(last_update));
         tdDate.textContent = date;
+        const tdState = mkel("td", tr);
+        tdState.classList.add("state");
+        tdState.textContent = state;
         const tdSummary = mkel("td", tr);
         tdSummary.classList.add("summary");
         tdSummary.textContent = summary;
@@ -92,6 +76,9 @@ window.addEventListener("load", async loadEvt => {
     const date = mkel("th", head);
     date.classList.add("date");
     date.textContent = "updated";
+    const state = mkel("th", head);
+    state.classList.add("state");
+    state.textContent = "state";
     const summary = mkel("th", head);
     summary.classList.add("summary");
     summary.textContent = "summary";
