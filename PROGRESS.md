@@ -6,6 +6,11 @@
 * edit an issue
 * subscribe to the log
 
+## issuedb
+
+* list issues by user
+* list issues by date range
+
 ## people
 
 * ~add a pglogapi for users~
