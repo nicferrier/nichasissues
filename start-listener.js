@@ -147,9 +147,30 @@ const startAll = async function (dir=process.cwd()) {
 }
 
 if (require.main === module) {
-    const scriptName = process.argv[2];
-    // start(scriptName);
-    startAll().then();
+    const scripts = process.argv.slice(2);
+    if (scripts !== undefined) {
+        const run = async (scripts, stdout) => {
+            const [bootScript, ...otherScripts] = scripts;
+            if (bootScript !== undefined) {
+                try {
+                    console.log("booting", bootScript);
+                    const baseName = path.basename(bootScript);
+                    const dirName = path.basename(path.dirname(bootScript));
+                    [listeningPort, child, piped] = await start(bootScript, bootScript);
+                    console.log(`running ${bootScript} on ${listeningPort}`);
+                    const pipedResult = piped.pipe(stdout);
+                    run(otherScripts, pipedResult);
+                }
+                catch (e) {
+                    console.log(`can't run script because`, e);
+                }
+            }
+        };
+        run(scripts, process.stdout);
+    }
+    else {
+        startAll().then();
+    }
 }
 else {
     module.exports = start;
