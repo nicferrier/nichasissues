@@ -3,6 +3,8 @@
 * ~create an issue~
 * ~display top issues~
 * ~test that the created issue is the top issue~
+* keepie to all the keepies we're authorized for - needs to find it's receiptUrl AND the keepieUrl
+
 * edit an issue
 * subscribe to the log
 
@@ -14,7 +16,6 @@
 ## people
 
 * ~add a pglogapi for users~
-* sort out server.js with multiple APIs - multiple API classes?
 
 ## artifacts
 
