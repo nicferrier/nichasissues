@@ -5,6 +5,7 @@
   "main": "id.js",
   "dependencies": {
     "body-parser": "^1.18.3",
+    "cranker-router": "file:../npm-cranker-router",
     "express": "^4.16.4",
     "pg-log-api": "^0.0.4"
   },
