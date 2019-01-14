@@ -1,12 +1,10 @@
 function narrowingDate(time) {
     const getMonthString = function (time) {
-        console.log("getMonth");
         const years = time.getFullYear();
         const months = "" + time.getMonth() + 1;
         return `${years}-${months.padStart(2, "0")}`;
     };
     const getDayString = function (time) {
-        console.log("getDay");
         const months = "" + time.getMonth() + 1;
         const days = "" + time.getDate();
         return `${months.padStart(2, "0")}-${days.padStart(2, "0")}`;
