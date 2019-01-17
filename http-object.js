@@ -35,7 +35,7 @@ function httpRequest(targetUrl, options={}) {
               : authedRequest;
 
         const response = new Promise((resolve, reject) => {
-            console.log("headered request", headeredRequest);
+            console.log("httpObj headered request", headeredRequest);
             const httpTx = http.request(headeredRequest, response => {
                 if (DEBUG) {
                     console.log("httpObj", targetUrl, response.statusCode);
