@@ -2,7 +2,7 @@ const express = require("express");
 const path = require("path");
 const bodyParser = require("body-parser");
 const http = require("http");
-const multer = require("multer");
+const multer = require("multer"); /// kill?
 const stream = require("stream");
 const url = require("url");
 const httpRequestObject = require("./http-object.js");
@@ -10,44 +10,6 @@ const crypto = require("crypto");
 
 const app = express();
 const upload = multer();
-
-const issueSecretWaiting = [];
-app.post("/issuedb-secret", upload.array(), function (req, res) {
-    try {
-        const {name: serviceName, password} = req.body;
-        function send(queue) {
-            if (queue.length < 1) return;
-            const resolvable = queue.pop();
-            resolvable({service: serviceName, secret: password});
-            send(queue);
-        }
-        send(issueSecretWaiting);
-        res.sendStatus(204);
-    }
-    catch (e) {
-        res.sendStatus(400);
-    }
-});
-
-const userSecretWaiting = [];
-app.post("/userdb-secret", upload.array(), function (req, res) {
-    try {
-        const {name: serviceName, password} = req.body;
-        console.log("keepie secret received for:", serviceName);
-        function send(queue) {
-            if (queue.length < 1) return;
-            const resolvable = queue.pop();
-            resolvable({service: serviceName, secret: password});
-            send(queue);
-        }
-        send(userSecretWaiting);
-        res.sendStatus(204);
-    }
-    catch (e) {
-        res.sendStatus(400);
-    }
-});
-
 
 app.use("/www", express.static(path.join(__dirname, "www")));
 
@@ -65,17 +27,22 @@ app.get("/issue", function (req, res) {
     res.sendFile(path.join(__dirname, "index.html"));
 });
 
+const initKeepieStuff = require("./keepie-stuff.js");
+initKeepieStuff(app);
+app.keepieEndpoint("/issuedb-secret");
+app.keepieEndpoint("/userdb-secret");
 
 async function appInit(listener, crankerRouterUrls, app) {
+    const localAddress = `http://localhost:${listener.address().port}`;
+
     app.get("/issue/top", async (req, res) => {
         const topUrl = `http://${crankerRouterUrls[0]}/issuedb/issue`;
         const requestor = httpRequestObject(topUrl);
         let response = await requestor();
         if (response.statusCode&400 == 400
             && response.headers["x-keepie-location"] !== undefined) {
-            const keepieLocation = response.headers["x-keepie-location"];
-            console.log("keepie url", keepieLocation);
-            const receiptUrl = "http://localhost:8027/issuedb-secret"; // FIXME what's the receipt url???
+            const keepieLocationx = response.headers["x-keepie-location"];
+            const receiptUrl = xlocalAddress + "/issuedb-secret";
             const keepieRequestor = httpRequestObject(keepieLocation, {
                 method: "POST",
                 headers: {
@@ -83,14 +50,7 @@ async function appInit(listener, crankerRouterUrls, app) {
                 }
             });
             const keepieResponse = await keepieRequestor();
-
-            // This waits for the keepie request to arrive by pushing
-            // the resolve function into a list which the keepie
-            // handler retrieves and calls
-            const {service, secret} = await new Promise((resolve, reject) => {
-                issueSecretWaiting.push(resolve);
-            });
-
+            const {service, secret} = await app.keepieResponse("/issuedb-secret");
             response = await requestor({auth:`log:${secret}`});
         }
 
@@ -114,7 +74,6 @@ async function appInit(listener, crankerRouterUrls, app) {
         }
 
         try {
-            console.log("issue handler", req.body);
             const {summary, description, editor} = req.body;
             const edit = new Date();
             const editTime = edit.valueOf();
@@ -128,7 +87,6 @@ async function appInit(listener, crankerRouterUrls, app) {
             };
 
             const logUrl = `http://${crankerRouterUrls[0]}/issuedb/log`;
-            console.log("log url", logUrl);
             const requestor = httpRequestObject(logUrl, {
                 method: "POST",
                 headers: {
@@ -136,15 +94,12 @@ async function appInit(listener, crankerRouterUrls, app) {
                 },
                 requestBody: JSON.stringify(struct)
             });
-            console.log("made an http obj");
-
+            
             let response = await requestor();
-            console.log("oops - got an error", response);
             if (response.statusCode&400 == 400
                 && response.headers["x-keepie-location"] !== undefined) {
                 const keepieLocation = response.headers["x-keepie-location"];
-                console.log("keepie url", keepieLocation);
-                const receiptUrl = "http://localhost:8027/issuedb-secret"; // FIXME what's the receipt url???
+                const receiptUrl = localAddress + "/issuedb-secret";
                 const keepieRequestor = httpRequestObject(keepieLocation, {
                     method: "POST",
                     headers: {
@@ -152,11 +107,7 @@ async function appInit(listener, crankerRouterUrls, app) {
                     }
                 });
                 const keepieResponse = await keepieRequestor();
-                console.log("keepieResponse!", keepieResponse);
-                const {service, secret} = await new Promise((resolve, reject) => {
-                    issueSecretWaiting.push(resolve);
-                });
-                console.log("and got back", service, secret);
+                const {service, secret} = await app.keepieResponse("/issuedb-secret");
                 response = await requestor({auth:`log:${secret}`});
             }
             
