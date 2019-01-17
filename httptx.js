@@ -26,6 +26,7 @@ const httpRequest = async function (targetUrl, options={}) {
             }
             const returnObject = {
                 statusCode: response.statusCode,
+                headers: response.headers,
                 body: function () {
                     return new Promise((bodyResolve, bodyReject) => {
                         let buffer = "";

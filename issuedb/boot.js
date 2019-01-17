@@ -1,5 +1,6 @@
 const pgLogApi = require("pg-log-api");
 const path = require("path");
+const crankerConnect = require("cranker-connector");
 
 exports.boot = async function (port) {
     if (process.env["ISSUEDB_KEEPIE_WRITE"] === undefined) {
@@ -12,6 +13,7 @@ exports.boot = async function (port) {
     }
 
     const [app, listener, dbConfigPromise] = await pgLogApi.main(port, {
+        prefix: "issuedb",
         dbDir: path.join(__dirname, "issue-dbdir"),
         keepieAuthorizedForWriteEnvVar: "ISSUEDB_KEEPIE_WRITE",
         keepieAuthorizedForReadOnlyEnvVar: "ISSUEDB_KEEPIE_READONLY",
@@ -19,10 +21,26 @@ exports.boot = async function (port) {
     });
     const dbConfig = await dbConfigPromise;
 
-    app.get("/issue", async (req, res) => {
-        const issueRs = await app.db.query("select * from issue where state='OPEN' order by last_update desc");
+    app.get("/issuedb/issue", dbConfig.keepieAdvertMiddleware, async (req, res) => {
+        const issueRs = await app.db.query(
+            "select * from issue where state='OPEN' order by last_update desc"
+        );
         res.json(issueRs.rows);
     });
+
+    const crankerRouterVar = process.env["CRANKER_ROUTERS"];
+    if (crankerRouterVar !== undefined) {
+        const crankerRouters = crankerRouterVar.split(",");
+        if (crankerRouters.length > 0) {
+            const servicePort = listener.address().port;
+            console.log("cranker connecting to routers", crankerRouters);
+            const routerCluster = await crankerConnect(
+                crankerRouters, "issuedb", `http://localhost:${servicePort}`, {
+                    _do_untls: true
+                }
+            );
+        }
+    }
     return listener;
 }
 

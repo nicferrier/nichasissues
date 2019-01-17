@@ -11,6 +11,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "cranker-connector": "file:../../npm-crank",
     "multer": "^1.4.1",
     "pg-log-api": "file:../../pglogapi"
   }

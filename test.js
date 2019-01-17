@@ -11,7 +11,6 @@ const httpRequest = require("./httptx.js");
 const assert = require("assert");
 
 const server = rewire("./server.js");
-const serverIssueApi = server.__get__("issueApi");
 const serverBoot = server.__get__("boot");
 
 function jparse(source) {
@@ -29,29 +28,33 @@ async function test() {
     process.env["ISSUEDB_KEEPIE_WRITE"] = authorizedWritersFile;
 
     // Start the issuedb pglog
-    const [issueDbPort, issueDbProcess, issueDbPipe] = await start("issuedb/boot.js", "issuedb");
+    const [crankerRouter,
+           issueDbPort,
+           issueDbProcess,
+           issueDbPipe] = await start("issuedb/boot.js", "issuedb");;
     issueDbPipe.pipe(process.stdout);
     console.log("issuedb: port", issueDbPort);
+    console.log("cranker router port", crankerRouter.getListener().address().port);
+    console.log("cranker router cranker port", crankerRouter.getCrankerListener().address().port);
 
     // Set the KEEPIEURL env var to the port that the server just started
     process.env["KEEPIEURL"] = `http://localhost:${issueDbPort}/keepie/write/request`;
-    const [serverPassword, serverListener] = await new Promise(async (resolve, reject) => {
-        let serverListener;
-        const oldSetPassword = serverIssueApi.setPassword;
-        serverIssueApi.setPassword = function (password) {
-            oldSetPassword.call(serverIssueApi, password);
-            resolve([password, serverListener]);
-        };
-
-        serverListener = await serverBoot();
+    const serverListener = await new Promise(async (resolve, reject) => {
+        const serverListener = await serverBoot();
         const serverPort = serverListener.address().port;
         await fs.promises.writeFile(
             authorizedWritersFile,
             JSON.stringify([`http://localhost:${serverPort}/issuedb-secret`]) + "\n"
         );
+        resolve(serverListener);
     });
 
-    console.log("password arrived!", serverPassword);
+    // Output the cranked paths now that everything is started up
+    const crankerPort = crankerRouter.getListener().address().port;
+    const crankerUrl = `http://localhost:${crankerPort}/health`;
+    const crankedPathsResponse = await httpRequest(crankerUrl);
+    const crankedPaths = await crankedPathsResponse.body();
+    console.log("cranked paths", crankedPaths);
 
     // now we can test a post
     const statuses = [
@@ -78,13 +81,14 @@ async function test() {
         },
         requestBody: formData
     });
+
+    console.log("create response", response);
+    assert(response.statusCode == 201, `create issue response was not 201: ${JSON.stringify(response)}`);
     const body = await response.body();
     const [createIssueJsonError, createdIssueData] = jparse(body);
     assert(createIssueJsonError === undefined, `create issue json does not parse: ${createIssueJsonError} ${createdIssueData}`);
-    assert(response.statusCode == 201, `create issue response was not 201: ${response}`);
+    console.log("created log data", createdIssueData);
 
-    console.log(createdIssueData);
-    
     const topIssuesResponse = await httpRequest(issueUrl + "/top");
     const topIssuesBody = await topIssuesResponse.body();
     const [topIssuesJsonError, topIssuesData] = jparse(topIssuesBody);
@@ -93,11 +97,15 @@ async function test() {
 
     // Finally, let's...
     issueDbProcess.kill("SIGINT");
+    crankerRouter.getListener().close();
+    crankerRouter.getCrankerListener().close();
     serverListener.close();
     console.log("closed everything?");
     return 0;
 }
 
-test().then(exitCode => console.log(exitCode));
+test()
+    .then(exitCode => console.log(exitCode))
+    .catch(e => console.log(e));
 
 // End
