@@ -5,6 +5,7 @@
 * ~test that the created issue is the top issue~
 * ~refactor to do everything by crankers~
 * ~start-listener is broken starting everything~
+* start-listener is broken for handling argv supplied boot packages
 * cache the keepie returned password somehow
 * keepie to all the keepies we're authorized for - needs to find it's receiptUrl AND the keepieUrl
 
