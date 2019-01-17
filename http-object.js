@@ -25,7 +25,7 @@ function httpRequest(targetUrl, options={}) {
             path: path
         };
 
-        console.log("http request path", request.path);
+        console.log("http object request path", request.path);
 
         const authedRequest = (auth !== undefined)
               ? Object.assign({auth:auth}, request)
@@ -35,10 +35,9 @@ function httpRequest(targetUrl, options={}) {
               : authedRequest;
 
         const response = new Promise((resolve, reject) => {
-            console.log("httpObj headered request", headeredRequest);
             const httpTx = http.request(headeredRequest, response => {
                 if (DEBUG) {
-                    console.log("httpObj", targetUrl, response.statusCode);
+                    console.log("http object", method, targetUrl, response.statusCode);
                 }
                 const returnObject = {
                     statusCode: response.statusCode,
