@@ -4,7 +4,6 @@
 * ~display top issues~
 * ~test that the created issue is the top issue~
 * ~refactor to do everything by crankers~
- * service discovery any other way was a giant pita
 * cache the keepie returned password somehow
 * keepie to all the keepies we're authorized for - needs to find it's receiptUrl AND the keepieUrl
 
