@@ -6,6 +6,7 @@ const multer = require("multer"); /// kill?
 const stream = require("stream");
 const url = require("url");
 const httpRequestObject = require("./http-object.js");
+const httpRequest = require("./http-v2.js");
 const crypto = require("crypto");
 
 const app = express();
@@ -36,24 +37,18 @@ async function appInit(listener, crankerRouterUrls, app) {
     const localAddress = `http://localhost:${listener.address().port}`;
 
     app.get("/issue/top", async (req, res) => {
-        const topUrl = `http://${crankerRouterUrls[0]}/issuedb/issue`;
-        const requestor = httpRequestObject(topUrl);
-        let response = await requestor();
-        if (response.statusCode&400 == 400
-            && response.headers["x-keepie-location"] !== undefined) {
-            const keepieLocationx = response.headers["x-keepie-location"];
-            const receiptUrl = xlocalAddress + "/issuedb-secret";
-            const keepieRequestor = httpRequestObject(keepieLocation, {
-                method: "POST",
-                headers: {
-                    "x-receipt-url": receiptUrl
-                }
-            });
-            const keepieResponse = await keepieRequestor();
-            const {service, secret} = await app.keepieResponse("/issuedb-secret");
-            response = await requestor({auth:`log:${secret}`});
+        const crankerEndpoint = crankerRouterUrls[0]; 
+        const topUrl = `http://${crankerEndpoint}/issuedb/issue`;
+        const keepieUrl = `http://${crankerEndpoint}/issuedb/keepie/write/request`;
+        const {service, secret} = app.keepieResponse("/issuedb-secret", keepieUrl, listener);
+        console.log("service, secret", service, secret);
+        const response = await httpRequest(topUrl, {
+            auth: `${service}:${secret}`
+        });
+        if (response.statusCode&400 == 400) {
+            console.log("error, response>", response);
+            return response.sendStatus(400);
         }
-
         const body = await response.body();
         const [error, data] = await Promise.resolve([undefined, JSON.parse(body)]).catch(e => [e]);
         if (error !== undefined) {
@@ -86,31 +81,22 @@ async function appInit(listener, crankerRouterUrls, app) {
                 editTime: editTime
             };
 
-            const logUrl = `http://${crankerRouterUrls[0]}/issuedb/log`;
-            const requestor = httpRequestObject(logUrl, {
+            const crankerEndpoint = crankerRouterUrls[0];
+            const logUrl = `http://${crankerEndpoint}/issuedb/log`;
+            const keepieUrl = `http://${crankerEndpoint}/issuedb/keepie/write/request`;
+            const {service, secret} = await app.keepieResponse("/issuedb-secret", keepieUrl, listener);
+            console.log("log service, secret>", service, secret);
+            const response = await httpRequest(logUrl, {
                 method: "POST",
-                headers: {
-                    "content-type": "application/json"
-                },
+                auth: `${service}:${secret}`,
+                headers: { "content-type": "application/json" },
                 requestBody: JSON.stringify(struct)
             });
             
-            let response = await requestor();
-            if (response.statusCode&400 == 400
-                && response.headers["x-keepie-location"] !== undefined) {
-                const keepieLocation = response.headers["x-keepie-location"];
-                const receiptUrl = localAddress + "/issuedb-secret";
-                const keepieRequestor = httpRequestObject(keepieLocation, {
-                    method: "POST",
-                    headers: {
-                        "x-receipt-url": receiptUrl
-                    }
-                });
-                const keepieResponse = await keepieRequestor();
-                const {service, secret} = await app.keepieResponse("/issuedb-secret");
-                response = await requestor({auth:`log:${secret}`});
+            if (response.statusCode&400 == 400) {
+                console.log("error, response>", response);
+                return res.status(400).send(`issuedb post error ${response}`);
             }
-            
             if (response.statusCode == 200) {
                 console.log("issuedb response", response);
                 res.status(201);
@@ -122,8 +108,9 @@ async function appInit(listener, crankerRouterUrls, app) {
         }
         catch (e) {
             console.log("error", e, req.body);
+            res.status(400).send(`error somewhere ${e}`);
         }
-        res.sendStatus(400);
+        res.status(400).send("unknown error");
     });
 }
 

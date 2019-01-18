@@ -3,7 +3,7 @@ const stream = require("stream");
 const path = require("path");
 const fs = require("fs");
 const express = require("express");
-const httpRequest = require("./http-object.js");
+const httpRequest = require("./http-v2.js");
 const router = require("cranker-router");
 
 let childCount = 0;
@@ -117,7 +117,7 @@ const startAll = async function (routerObject, dir=process.cwd()) {
     // FIXME - Don't really need this bit  ... just an extra bit of testing?
     const routerPort = routerObject.getListener().address().port;
     const routerUrl = `http://localhost:${routerPort}/health`;
-    const response = await httpRequest(routerUrl).call();
+    const response = await httpRequest(routerUrl);
     const body = await response.body();
     console.log("ROUTES", await Promise.resolve(JSON.parse(body)).catch(e => e));
 }

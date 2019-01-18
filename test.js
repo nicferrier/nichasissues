@@ -7,7 +7,7 @@ const url = require("url");
 const querystring = require("querystring");
 const http = require("http");
 const stream = require("stream");
-const httpRequest = require("./http-object.js");
+const httpRequest = require("./http-v2.js");
 const assert = require("assert");
 
 const server = rewire("./server.js");
@@ -52,7 +52,7 @@ async function test() {
     // Output the cranked paths now that everything is started up
     const crankerPort = crankerRouter.getListener().address().port;
     const crankerUrl = `http://localhost:${crankerPort}/health`;
-    const crankedPathsResponse = await httpRequest(crankerUrl).call();
+    const crankedPathsResponse = await httpRequest(crankerUrl);
     const crankedPaths = await crankedPathsResponse.body();
     console.log("cranked paths", crankedPaths);
 
@@ -72,6 +72,7 @@ async function test() {
     };
     const formData = querystring.stringify(updateData);
     const serverPort = serverListener.address().port;
+
     const issueUrl = `http://localhost:${serverPort}/issue`;
     const response = await httpRequest(issueUrl, {
         method: "POST",
@@ -80,16 +81,15 @@ async function test() {
             "content-length": Buffer.byteLength(formData)
         },
         requestBody: formData
-    }).call();
-
-    console.log("create response", response);
-    assert(response.statusCode == 201, `create issue response was not 201: ${JSON.stringify(response)}`);
+    });
     const body = await response.body();
+
+    assert(response.statusCode == 201, `create issue response was not 201: ${JSON.stringify(response)}`);
     const [createIssueJsonError, createdIssueData] = jparse(body);
     assert(createIssueJsonError === undefined, `create issue json does not parse: ${createIssueJsonError} ${createdIssueData}`);
     console.log("created log data", createdIssueData);
 
-    const topIssuesResponse = await httpRequest(issueUrl + "/top").call();
+    const topIssuesResponse = await httpRequest(issueUrl + "/top");
     const topIssuesBody = await topIssuesResponse.body();
     const [topIssuesJsonError, topIssuesData] = jparse(topIssuesBody);
     assert(topIssuesJsonError === undefined, `top issues json does not parse: ${topIssuesJsonError} ${topIssuesBody}`);
