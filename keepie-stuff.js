@@ -2,6 +2,7 @@ const httpRequestObject = require("./http-v2.js");
 const multer = require("multer");
 const upload = multer();
 
+const DEBUG=false;
 
 function init(app) {
     const resolveQueues = {};
@@ -37,8 +38,22 @@ function init(app) {
         });
     };
 
+    const cache = new Map();
     app.keepieResponse = async function (path, keepieUrl, listener) {
-        const {service, secret} = await new Promise(async (Kresolve, Kreject) => {
+        const key = `${path}__${keepieUrl}`;
+        const cachedPromise = cache.get(key);
+        if (cachedPromise !== undefined) {
+            if (DEBUG) {
+                console.log("CACHE HIT", key);
+            }
+            return cachedPromise;
+        }
+
+        if (DEBUG) {
+            console.log("CACHE MISS", key);
+        }
+
+        const p = new Promise(async (resolve, reject) => {
             const localPort = listener.address().port;
             const localAddress = `http://localhost:${localPort}`;
             const receiptUrl = localAddress + path;
@@ -47,12 +62,13 @@ function init(app) {
                 headers: { "x-receipt-url": receiptUrl }
             });
             // FIXME - should check keepie response for 204
+            keepieResponse.statusCode == 204 || reject(new Error(keepieResponse));
             console.log("keepie response", path, keepieResponse);
             const queue = getOrCreateQueue(path);
-            queue.push(Kresolve);
+            queue.push(resolve);
         });
-        console.log("AFTER AWAIT");
-        return {service:service, secret:secret};
+        cache.set(key, p);
+        return p;
     }
 }
 

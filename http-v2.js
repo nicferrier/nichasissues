@@ -6,7 +6,7 @@ const stream = require("stream");
 // the function can be called multiple times and send a different http request each time
 // the function can be passed repeated options, more headers
 
-const DEBUG=true;
+const DEBUG=false;
 
 function httpRequest(targetUrl, options={}) {
     const urlObj = url.parse(targetUrl);
@@ -27,7 +27,9 @@ function httpRequest(targetUrl, options={}) {
           ? Object.assign({headers:headers}, authedRequest)
           : authedRequest;
 
-    console.log(`http-v2 ${targetUrl} ${JSON.stringify(headeredRequest)}`);
+    if (DEBUG) {
+        console.log(`http-v2 ${targetUrl} ${JSON.stringify(headeredRequest)}`);
+    }
     const response = new Promise((resolve, reject) => {
         const httpTx = http.request(headeredRequest, response => {
             if (DEBUG) {
@@ -56,7 +58,6 @@ function httpRequest(targetUrl, options={}) {
         });
 
         if (requestBody !== undefined) {
-            console.log("http-v2 request body", requestBody);
             httpTx.end(requestBody);
         }
         else {

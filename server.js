@@ -34,13 +34,12 @@ app.keepieEndpoint("/userdb-secret");
 
 async function appInit(listener, crankerRouterUrls, app) {
     const localAddress = `http://localhost:${listener.address().port}`;
+    const crankerEndpoint = crankerRouterUrls[0]; 
+    const keepieUrl = `http://${crankerEndpoint}/issuedb/keepie/write/request`;
 
     app.get("/issue/top", async (req, res) => {
-        const crankerEndpoint = crankerRouterUrls[0]; 
         const topUrl = `http://${crankerEndpoint}/issuedb/issue`;
-        const keepieUrl = `http://${crankerEndpoint}/issuedb/keepie/write/request`;
-        const {service, secret} = app.keepieResponse("/issuedb-secret", keepieUrl, listener);
-        console.log("service, secret", service, secret);
+        const {service, secret} = await app.keepieResponse("/issuedb-secret", keepieUrl, listener);
         const response = await httpRequest(topUrl, {
             auth: `${service}:${secret}`
         });
@@ -80,11 +79,8 @@ async function appInit(listener, crankerRouterUrls, app) {
                 editTime: editTime
             };
 
-            const crankerEndpoint = crankerRouterUrls[0];
             const logUrl = `http://${crankerEndpoint}/issuedb/log`;
-            const keepieUrl = `http://${crankerEndpoint}/issuedb/keepie/write/request`;
             const {service, secret} = await app.keepieResponse("/issuedb-secret", keepieUrl, listener);
-            console.log("log service, secret>", service, secret);
             const response = await httpRequest(logUrl, {
                 method: "POST",
                 auth: `${service}:${secret}`,
@@ -101,8 +97,7 @@ async function appInit(listener, crankerRouterUrls, app) {
                 res.status(201);
                 const body = await response.body();
                 const data = JSON.parse(body);
-                res.json(data);
-                return;
+                return res.json(data);
             }
         }
         catch (e) {
