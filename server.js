@@ -5,7 +5,6 @@ const http = require("http");
 const multer = require("multer"); /// kill?
 const stream = require("stream");
 const url = require("url");
-const httpRequestObject = require("./http-object.js");
 const httpRequest = require("./http-v2.js");
 const crypto = require("crypto");
 
