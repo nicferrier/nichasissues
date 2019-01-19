@@ -4,7 +4,6 @@ const crankerConnect = require("cranker-connector");
 
 exports.boot = async function (port) {
     if (process.env["USERDB_KEEPIE_WRITE"] === undefined) {
-        console.log("setting USERDB_KEEPIE_WRITE");
         process.env["USERDB_KEEPIE_WRITE"] = path.join(__dirname, "authorized-urls-write.json");
     }
 

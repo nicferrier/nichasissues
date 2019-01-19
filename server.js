@@ -1,12 +1,10 @@
 const express = require("express");
 const path = require("path");
 const bodyParser = require("body-parser");
-const http = require("http");
-const multer = require("multer"); /// kill?
-const stream = require("stream");
 const url = require("url");
 const httpRequest = require("./http-v2.js");
 const crypto = require("crypto");
+const initKeepieStuff = require("./keepie-stuff.js");
 
 const app = express();
 const upload = multer();
@@ -22,12 +20,10 @@ app.get("/status", (req, res) => {
     });
 });
 
-// homepage
 app.get("/issue", function (req, res) {
     res.sendFile(path.join(__dirname, "index.html"));
 });
 
-const initKeepieStuff = require("./keepie-stuff.js");
 initKeepieStuff(app);
 app.keepieEndpoint("/issuedb-secret");
 app.keepieEndpoint("/userdb-secret");
@@ -43,10 +39,11 @@ async function appInit(listener, crankerRouterUrls, app) {
         const response = await httpRequest(topUrl, {
             auth: `${service}:${secret}`
         });
+
         if (response.statusCode&400 == 400) {
-            console.log("error, response>", response);
             return response.sendStatus(400);
         }
+
         const body = await response.body();
         const [error, data] = await Promise.resolve([undefined, JSON.parse(body)]).catch(e => [e]);
         if (error !== undefined) {
@@ -89,19 +86,16 @@ async function appInit(listener, crankerRouterUrls, app) {
             });
             
             if (response.statusCode&400 == 400) {
-                console.log("error, response>", response);
                 return res.status(400).send(`issuedb post error ${response}`);
             }
+
             if (response.statusCode == 200) {
-                console.log("issuedb response", response);
-                res.status(201);
                 const body = await response.body();
                 const data = JSON.parse(body);
-                return res.json(data);
+                return res.status(201).json(data);
             }
         }
         catch (e) {
-            console.log("error", e, req.body);
             res.status(400).send(`error somewhere ${e}`);
         }
         res.status(400).send("unknown error");
@@ -110,16 +104,7 @@ async function appInit(listener, crankerRouterUrls, app) {
 
 const boot = async function () {
     const listener = app.listen(8027, async function () {
-        const port = listener.address().port;
-        const addr = listener.address().address;
-        console.log("addr", addr);
-
         appInit(listener, process.env["CRANKER_ENDPOINTS"].split(","), app);
-
-        const host = addr == "::" ? "localhost" : addr; // FIXME probably wrong
-        const url = `http://${host}:${port}/issue`;
-        console.log(`listening on ${port}`);
-        console.log(`contact on ${url}`);
     });
     return listener;
 }
