@@ -19,6 +19,9 @@
 ## people
 
 * ~add a pglogapi for users~
+* make a user - username, email, password
+* update a user
+* authenticate as a user
 
 ## artifacts
 
