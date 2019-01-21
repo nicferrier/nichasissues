@@ -4,6 +4,7 @@
   "description": "",
   "main": "id.js",
   "dependencies": {
+    "bcrypt-nodejs": "0.0.3",
     "body-parser": "^1.18.3",
     "cranker-router": "file:../npm-cranker-router",
     "express": "^4.16.4",
