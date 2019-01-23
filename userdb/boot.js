@@ -21,7 +21,7 @@ exports.boot = async function (port) {
     const dbConfig = await dbConfigPromise;
 
     app.get("/userdb/users", async (req, res) => {
-        console.log("issue request");
+        console.log("user request");
         const issueRs = await app.db.query("select * from \"user\" order by last_update desc");
         res.json(issueRs.rows);
     });
