@@ -80,7 +80,7 @@ async function startPackageDir(routerObject, stdout, dir) {
         return [undefined, [listeningPort, child, stdoutPiped]];
     }
     catch (e) { 
-       // console.log("error while starting package", dir, e);
+        // console.log("error while starting package", dir, e);
         return [e];
     }
 }
@@ -104,10 +104,12 @@ const startAll = async function (routerObject, dir=process.cwd()) {
     const run = async function (stdout, [dir, ...dirs]) {
         let newPipe = stdout;
         const [error, result] = await startPackageDir(routerObject, stdout, dir);
-        if (error == undefined) {
+
+        if (error === undefined) {
             const [listeningPort, child, pipedStdout] = result;
             newPipe = pipedStdout;
         }
+
         if (dirs !== undefined && dirs.length > 0) {
             await run(newPipe, dirs);
         }
