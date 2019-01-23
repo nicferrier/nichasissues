@@ -39,7 +39,7 @@ function init(app) {
     };
 
     const cache = new Map();
-    app.keepieResponse = async function (path, keepieUrl, listener) {
+    app.keepieResponse = async function (path, keepieUrl, listener, timeOut=5000) {
         const key = `${path}__${keepieUrl}`;
         const cachedPromise = cache.get(key);
         if (cachedPromise !== undefined) {
@@ -65,7 +65,16 @@ function init(app) {
             keepieResponse.statusCode == 204 || reject(new Error(keepieResponse));
             console.log("keepie response", path, keepieResponse);
             const queue = getOrCreateQueue(path);
-            queue.push(resolve);
+            let resolved = false;
+            queue.push(function (args) {
+                resolved = true;
+                resolve(args);
+            });
+            setTimeout(timeEvt => {
+                if (resolved == false) {
+                    reject(new Error("timed out!"))
+                }
+            }, timeOut);  // wait 5 seconds
         });
         cache.set(key, p);
         return p;
