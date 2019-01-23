@@ -1,0 +1,20 @@
+<html>
+  <head>
+    <script src="/www/register.js" type="module"></script>
+    <link rel="stylesheet" href="/www/style.css" type="text/css"/>
+  </head>
+  <body>
+    <h1>nic has issues</h1>
+    <form class="register" method="POST" action="/user">
+      <input class="data" type="text" name="username" maxlength="60" required="1" placeholder="your name"/>
+      <input class="data" type="email" name="email" list="default-emails" maxlength="60" required="1" placeholder="your email address"/>
+      <datalist id="default-emails">
+        <option value="sally@gmail.com">
+        <option value="rahul@yahoo.com">
+        <option value="wing.che@wei.cn">
+      </datalist>
+      <input class="data" type="password" name="password" minlength="6" maxlength="60" required="1" placeholder="a password, at least 6 letters"/>
+      <input type="submit" value="make me a user"/>
+    </form>
+  </body>
+</html>
