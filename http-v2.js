@@ -36,7 +36,7 @@ function httpRequest(targetUrl, options={}) {
                 console.log("http-v2", method, targetUrl, response.statusCode);
             }
             const returnObject = {
-                request: request,
+                request: headeredRequest,
                 statusCode: response.statusCode,
                 headers: response.headers,
                 body: function () {
