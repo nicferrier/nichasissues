@@ -18,12 +18,24 @@ exports.boot = async function (port) {
         keepieAuthorizedForReadOnlyEnvVar: "USERDB_KEEPIE_READONLY",
         keepieTime: 1000
     });
+
     const dbConfig = await dbConfigPromise;
 
     app.get("/userdb/users", async (req, res) => {
-        console.log("user request");
-        const issueRs = await app.db.query("select * from \"user\" order by last_update desc");
-        res.json(issueRs.rows);
+        const userListRs = await app.db.query("select * from \"user\" order by last_update desc");
+        res.json(userListRs.rows);
+    });
+
+    app.get("/userdb/user/:email", async (req, res) => {
+        console.log("params", req.params);
+        const userRs = await app.db.query(
+            `select username, password, last_update, email 
+from \"user\" 
+where email = $1 
+order by last_update desc`, [req.params.email]
+        );
+        console.log("user returned", userRs.rows);
+        res.json(userRs.rows);
     });
     
     const crankerRouterVar = process.env["CRANKER_ROUTERS"];

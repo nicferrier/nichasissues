@@ -17,7 +17,7 @@ const start = async function(crankerRouter, scriptName, prefixOut=undefined) {
     child = spawn(nodeBin, [script], {
         cwd: dir,
         env: Object.assign({
-            "PGLOGLEVEL": "fatal"
+            "PGLOGLEVEL": "notice"
         }, process.env)
     });
     childCount++;

@@ -18,6 +18,12 @@ form.register input[type="submit"] {
     height: 30px;
 }
 
+form.login {
+    display: block;
+    width: 40%;
+    align: right;
+}
+
 form.issues {
     display: block;
     width: 50%;

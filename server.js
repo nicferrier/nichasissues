@@ -3,10 +3,14 @@ const path = require("path");
 const bodyParser = require("body-parser");
 const url = require("url");
 const crypto = require("crypto");
+const bcrypt = require("bcrypt-nodejs");
 const httpRequest = require("./http-v2.js");
 const initKeepieStuff = require("./keepie-stuff.js");
 
 const app = express();
+initKeepieStuff(app);
+app.keepieEndpoint("/issuedb-secret");
+app.keepieEndpoint("/userdb-secret");
 
 app.use("/www", express.static(path.join(__dirname, "www")));
 
@@ -19,23 +23,58 @@ app.get("/status", (req, res) => {
     });
 });
 
+
+app.get(new RegExp("[/](register|login)$"), function (req, res) {
+    const [pathPart] = Object.values(req.params) || [];
+    const filePath = pathPart == "issue" ? "index" : pathPart;
+    res.sendFile(path.join(__dirname, `${filePath}.html`));
+});
+
 app.get("/issue", function (req, res) {
     res.sendFile(path.join(__dirname, "index.html"));
 });
-
-app.get("/register", function (req, res) {
-    res.sendFile(path.join(__dirname, "register.html"));
-});
-
-
-initKeepieStuff(app);
-app.keepieEndpoint("/issuedb-secret");
-app.keepieEndpoint("/userdb-secret");
 
 async function appInit(listener, crankerRouterUrls, app) {
     const localAddress = `http://localhost:${listener.address().port}`;
     const crankerEndpoint = crankerRouterUrls[0]; 
     const formHandler = bodyParser.urlencoded({extended: true});
+
+    app.post("/login", formHandler, async function (req, res) {
+        console.log("login", req.body);
+        const {email, password: plainPassword} = req.body;
+        try {
+            const keepieUrl = `http://${crankerEndpoint}/userdb/keepie/write/request`;
+            const userDetailsUrl = `http://${crankerEndpoint}/userdb/user/${email}`;
+            console.log("auth url", userDetailsUrl);
+            const {service, secret} = await app.keepieResponse("/userdb-secret", keepieUrl, listener);
+            const response = await httpRequest(userDetailsUrl, {
+                auth: `${service}:${secret}`
+            });
+            
+            if (response.statusCode&400 == 400) {
+                return res.status(400).send("<h1>bad input</h1>");
+            }
+            const body = await response.body();
+            const [error, [{"password":passwordHashed}]]
+                  = await Promise.resolve([undefined, JSON.parse(body)]).catch(e => [e]);
+            if (error !== undefined) {
+                return response.setStatus(400).send("<h1>bad user</h1>");
+            }
+            const passwordMatched = await new Promise((resolve, reject) => {
+                bcrypt.compare(plainPassword, passwordHashed, function(err, isMatch) {
+                    if (err) reject(err);
+                    else resolve(isMatch);
+                });
+            });
+            if (!passwordMatched) {
+                return res.status(400).send("<h1>bad username or password</h1>");
+            }
+            res.send("<h1>yay! you logged in</h1>");
+        }
+        catch (e) {
+            return res.status(400).send(`<h1>errrrrrror ${e}</h1>`);
+        }
+    });
 
     app.get("/issue/top", async (req, res) => {
         const keepieUrl = `http://${crankerEndpoint}/issuedb/keepie/write/request`;
@@ -80,12 +119,19 @@ async function appInit(listener, crankerRouterUrls, app) {
     app.post("/user", formHandler, async function (req, res) {
         const keepieUrl = `http://${crankerEndpoint}/userdb/keepie/write/request`;
         try {
-            const {email, username, password} = req.body;
+            const {email, username, password:clearPassword} = req.body;
+            const passwordHash = await new Promise((resolve, reject) => {
+                bcrypt.hash(clearPassword, null, null, function(err, hash) {
+                    if (err) reject(err);
+                    else resolve(hash);
+                });
+            });
+
             const struct = {
                 action: "create",
                 email: email,
                 username: username,
-                password: password
+                password: passwordHash
             };
 
             const logUrl = `http://${crankerEndpoint}/userdb/log`;

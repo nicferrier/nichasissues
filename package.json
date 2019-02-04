@@ -8,6 +8,7 @@
     "body-parser": "^1.18.3",
     "cranker-router": "file:../npm-cranker-router",
     "express": "^4.16.4",
+    "express-basic-auth": "^1.1.6",
     "pg-log-api": "^0.0.4"
   },
   "devDependencies": {
