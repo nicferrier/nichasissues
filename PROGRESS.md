@@ -23,6 +23,14 @@
 * update a user
 * authenticate as a user
 
+## authentication
+
+choices
+
+* make a session in a new session db
+* make a session attached to the user, normalized into another table?
+* ~store session in the app somehow~
+
 ## artifacts
 
 * an artifact database

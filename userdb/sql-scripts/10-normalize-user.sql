@@ -12,6 +12,11 @@ begin
              log_rec.d,
              log_rec.data->>'password',
              log_rec.data->>'email');
+  elsif log_rec.data->>'action' = 'session' then
+     INSERT INTO user_session (sessionid, email, created)
+     VALUES (log_rec.data->>'sessionid',
+             log_rec.d,
+             log_rec.data->>'email');
   else
      RAISE NOTICE 'user_normalize_hook has action other than create: %', log_rec.data->>'action';
   end if;

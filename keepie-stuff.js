@@ -61,6 +61,7 @@ function init(app) {
                 method: "POST",
                 headers: { "x-receipt-url": receiptUrl }
             });
+            console.log("keepie-stuff response", keepieResponse);
             // FIXME - should check keepie response for 204
             keepieResponse.statusCode == 204 || reject(new Error(keepieResponse));
             console.log("keepie response", path, keepieResponse);

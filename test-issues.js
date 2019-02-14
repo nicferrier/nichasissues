@@ -84,7 +84,7 @@ async function test() {
     });
     const body = await response.body();
 
-    assert(response.statusCode == 201, `create issue response was not 201: ${JSON.stringify(response)}`);
+    assert(response.statusCode == 201, `create issue response was not 201: ${JSON.stringify(response)} ${JSON.stringify(body)}`);
     const [createIssueJsonError, createdIssueData] = jparse(body);
     assert(createIssueJsonError === undefined, `create issue json does not parse: ${createIssueJsonError} ${createdIssueData}`);
     console.log("created log data", createdIssueData);

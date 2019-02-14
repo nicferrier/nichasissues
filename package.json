@@ -6,6 +6,7 @@
   "dependencies": {
     "bcrypt-nodejs": "0.0.3",
     "body-parser": "^1.18.3",
+    "cookie-parser": "^1.4.4",
     "cranker-router": "file:../npm-cranker-router",
     "express": "^4.16.4",
     "express-basic-auth": "^1.1.6",

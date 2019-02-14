@@ -6,6 +6,7 @@ const crypto = require("crypto");
 const bcrypt = require("bcrypt-nodejs");
 const httpRequest = require("./http-v2.js");
 const initKeepieStuff = require("./keepie-stuff.js");
+const cookieParser = require("cookie-parser");
 
 const app = express();
 initKeepieStuff(app);
@@ -13,6 +14,12 @@ app.keepieEndpoint("/issuedb-secret");
 app.keepieEndpoint("/userdb-secret");
 
 app.use("/www", express.static(path.join(__dirname, "www")));
+app.use(cookieParser());
+
+async function auth(req, res, next) {
+    console.log("cookies", req.cookies.sesh);
+    next();
+}
 
 app.get("/status", (req, res) => {
     res.json({
@@ -30,7 +37,7 @@ app.get(new RegExp("[/](register|login)$"), function (req, res) {
     res.sendFile(path.join(__dirname, `${filePath}.html`));
 });
 
-app.get("/issue", function (req, res) {
+app.get("/issue", auth, function (req, res) {
     res.sendFile(path.join(__dirname, "index.html"));
 });
 
@@ -45,33 +52,64 @@ async function appInit(listener, crankerRouterUrls, app) {
         try {
             const keepieUrl = `http://${crankerEndpoint}/userdb/keepie/write/request`;
             const userDetailsUrl = `http://${crankerEndpoint}/userdb/user/${email}`;
-            console.log("auth url", userDetailsUrl);
+
             const {service, secret} = await app.keepieResponse("/userdb-secret", keepieUrl, listener);
-            const response = await httpRequest(userDetailsUrl, {
+            const getUserResponse = await httpRequest(userDetailsUrl, {
                 auth: `${service}:${secret}`
             });
-            
-            if (response.statusCode&400 == 400) {
+
+            if (getUserResponse.statusCode&400 == 400) {
                 return res.status(400).send("<h1>bad input</h1>");
             }
-            const body = await response.body();
-            const [error, [{"password":passwordHashed}]]
+
+            const body = await getUserResponse.body();
+
+            console.log("data", await Promise.resolve([undefined, JSON.parse(body)]).catch(e => [e]));
+
+            const [error, [{password:passwordHashed}]]
                   = await Promise.resolve([undefined, JSON.parse(body)]).catch(e => [e]);
             if (error !== undefined) {
-                return response.setStatus(400).send("<h1>bad user</h1>");
+                return res.setStatus(400).send("<h1>bad user</h1>");
             }
+
             const passwordMatched = await new Promise((resolve, reject) => {
                 bcrypt.compare(plainPassword, passwordHashed, function(err, isMatch) {
                     if (err) reject(err);
                     else resolve(isMatch);
                 });
             });
+
             if (!passwordMatched) {
                 return res.status(400).send("<h1>bad username or password</h1>");
             }
+
+            // Create a session id
+            const sessionId = await new Promise((resolve, reject) => {
+                bcrypt.hash(`${email}:${new Date().valueOf()}`, null, null, function(err, hash) {
+                    if (err) reject(err);
+                    else resolve(hash);
+                });
+            });
+            const sessionStruct = {
+                action: "session",
+                sessionid: sessionId,
+                email: email
+            };
+            const logUrl = `http://${crankerEndpoint}/userdb/log`;
+            const storeSessionResponse = await httpRequest(logUrl, {
+                method: "POST",
+                auth: `${service}:${secret}`,
+                headers: { "content-type": "application/json" },
+                requestBody: JSON.stringify(sessionStruct)
+            });
+            if (storeSessionResponse.statusCode&400 == 400) {
+                return res.status(400).send("<h1>cannot create a session</h1>");
+            }
+            res.cookie("sesh", `${email}:${sessionId}`);
             res.send("<h1>yay! you logged in</h1>");
         }
         catch (e) {
+            console.log(e.stack);
             return res.status(400).send(`<h1>errrrrrror ${e}</h1>`);
         }
     });
@@ -157,7 +195,7 @@ async function appInit(listener, crankerRouterUrls, app) {
         }
         catch (e) {
             console.log("error", e);
-            res.status(400).send(`error somewhere ${e}`);
+            return res.status(400).send(`error somewhere in userdb: ${e}`);
         }
         res.status(400).send("unknown error");
     });
@@ -206,9 +244,10 @@ async function appInit(listener, crankerRouterUrls, app) {
             }
         }
         catch (e) {
-            res.status(400).send(`error somewhere ${e}`);
+            console.log("error sending issue", e);
+            return res.status(400).send(`error somewhere in issue ${JSON.stringify(e.message)}`);
         }
-        res.status(400).send("unknown error");
+        return res.status(400).send("unknown error");
     });
 }
 

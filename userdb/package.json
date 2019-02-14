@@ -4,14 +4,14 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-      "test": "echo \"Error: no test specified\" && exit 1",
-      "boot": "boot.js"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "boot": "boot.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "cranker-connector": "file:../../npm-crank",
+    "cranker-connector": "file:../../npm-cranker-connector",
     "pg-log-api": "file:../../pglogapi"
   }
 }
