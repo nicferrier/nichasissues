@@ -16,11 +16,6 @@ app.keepieEndpoint("/userdb-secret");
 app.use("/www", express.static(path.join(__dirname, "www")));
 app.use(cookieParser());
 
-async function auth(req, res, next) {
-    console.log("cookies", req.cookies.sesh);
-    next();
-}
-
 app.get("/status", (req, res) => {
     res.json({
         up: true,
@@ -30,21 +25,52 @@ app.get("/status", (req, res) => {
     });
 });
 
-
 app.get(new RegExp("[/](register|login)$"), function (req, res) {
     const [pathPart] = Object.values(req.params) || [];
     const filePath = pathPart == "issue" ? "index" : pathPart;
     res.sendFile(path.join(__dirname, `${filePath}.html`));
 });
 
-app.get("/issue", auth, function (req, res) {
-    res.sendFile(path.join(__dirname, "index.html"));
-});
-
 async function appInit(listener, crankerRouterUrls, app) {
     const localAddress = `http://localhost:${listener.address().port}`;
     const crankerEndpoint = crankerRouterUrls[0]; 
     const formHandler = bodyParser.urlencoded({extended: true});
+
+    const auth = async function(req, res, next) {
+        const [email, sessionId] = req.cookies.sesh.split(":");
+        const keepieUrl = `http://${crankerEndpoint}/userdb/keepie/write/request`;
+        const sessionUrl = `http://${crankerEndpoint}/userdb/session/${sessionId}`;
+
+        const {service, secret} = await app.keepieResponse("/userdb-secret", keepieUrl, listener);
+        console.log("auth keepie response", service, secret, sessionId);
+        const getUserResponse = await httpRequest(sessionUrl, {
+            auth: `${service}:${secret}`
+        });
+
+        if (getUserResponse.statusCode&400 == 400) {
+            return res.status(400).send("<h1>bad input</h1>");
+        }
+
+        const body = await getUserResponse.body();
+        const [error, data] = await Promise.resolve([undefined, JSON.parse(body)]).catch(e => [e]);
+
+        if (error !== undefined) {
+            return res.setStatus(400).send("<h1>bad login</h1>");
+        }
+
+        const [{created,email:sessionEmail}] = data;
+        if (sesionEmail != email) {
+            return res.setStatus(400).send("<h1>bad login</h1>");
+        }
+
+        // Logged in!
+        next();
+    }
+
+    // App routes
+    app.get("/issue", auth, function (req, res) {
+        res.sendFile(path.join(__dirname, "index.html"));
+    });
 
     app.post("/login", formHandler, async function (req, res) {
         console.log("login", req.body);
