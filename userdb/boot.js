@@ -38,21 +38,28 @@ order by last_update desc`, [req.params.email]
         res.json(userRs.rows);
     });
 
-    app.get("/userdb/session/:sessionId", async (req, res) => {
-        console.log("params", req.params);
-        const sessionsRs = await app.db.query(
-            `select sessionid, email, created
+    // session names are base64 which can include /
+    app.get("/userdb/session/:sessionId([A-Za-z0-9.$/]+)", async (req, res) => {
+        try {
+            console.log("params", req.params);
+            const sessionsRs = await app.db.query(
+                `select sessionid, email, created
 from user_session 
 order by created desc`//, [req.params.sessionId]
-        );
-        console.log("sessions in the db", sessionsRs.rows);
-        const sessionRs = await app.db.query(
-            `select sessionid, email, created
+            );
+            console.log("sessions in the db", sessionsRs.rows);
+            const sessionRs = await app.db.query(
+                `select sessionid, email, created
 from user_session 
 where sessionid = $1
 order by created desc`, [req.params.sessionId]
-        );
-        res.json(sessionRs.rows);
+            );
+            res.json(sessionRs.rows);
+        }
+        catch (e) {
+            console.log("session error", e.stack);
+            res.status(400).send();
+        }
     });
 
     
