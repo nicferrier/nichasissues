@@ -43,10 +43,18 @@ async function appInit(listener, crankerRouterUrls, app) {
         if (res.statusCode == 400) {
             // set this on a cookie or something?
             console.log(res.loginError);
-            res.redirect("/login");
+            return res.redirect("/login");
         }
+
+        res.redirect("/issue");
     });
-    app.post("/register", register);
+    app.post("/register", register, function (req, res) {
+        if (res.statusCode == 400) {
+            return res.redirect("/register");
+        }
+
+        res.redirect("/login");
+    });
     
     app.get("/issue", auth, function (req, res) {
         res.sendFile(path.join(__dirname, "index.html"));

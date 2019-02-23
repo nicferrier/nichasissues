@@ -2,6 +2,7 @@ CREATE OR REPLACE FUNCTION user_normalize_hook(log_rec log) RETURNS void AS $use
 begin
   RAISE NOTICE 'user_normalize_hook (%,%,%)', log_rec.id, log_rec.d, log_rec.data->>'summary';
   if log_rec.data->>'action' = 'create' then
+     RAISE NOTICE 'inserting % into user table', log_rec.data->>'email';
      INSERT INTO "user" (username,
                          last_update,
                          created,
@@ -13,12 +14,16 @@ begin
              log_rec.data->>'password',
              log_rec.data->>'email');
   elsif log_rec.data->>'action' = 'session' then
+     RAISE NOTICE 'inserting % into session table for %',
+                     log_rec.data->>'sessionid',
+                     log_rec.data->>'email';
      INSERT INTO user_session (sessionid, created, email)
      VALUES (log_rec.data->>'sessionid',
              log_rec.d,
              log_rec.data->>'email');
   else
-     RAISE NOTICE 'user_normalize_hook has action other than create: %', log_rec.data->>'action';
+     RAISE NOTICE 'user_normalize_hook has action other than create: %',
+                    log_rec.data->>'action';
   end if;
 end;
 $user_normalize_hook$ LANGUAGE plpgsql;
