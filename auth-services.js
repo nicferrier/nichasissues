@@ -35,6 +35,8 @@ async function initAuth(listener, crankerEndpoint, app) {
                     return res.status(400);
                 }
 
+                req.authData = data[0];
+
                 // Logged in!
                 next();
             }

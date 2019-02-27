@@ -43,11 +43,24 @@ window.addEventListener("load", async loadEvt => {
         return false;
     });
 
+    // Now get some data
     const baseUrl = document.location.href;
+
+    // First the context
+    const ctxResponse = await fetch(baseUrl + "/context");
+    const {authData:{email}} = await ctxResponse.json();
+    const userButton = document.querySelector("button#user");
+    userButton.textContent = email;
+    userButton.addEventListener("click", clickEvt => {
+        alert("nothing happens when you click this right now!");
+    });
+
+    // Now the top issues
     const response = await fetch(baseUrl + "/top");
     const jsonData = await response.json();
     const data = jsonData; // JSON.parse(jsonData);
     console.log(data);
+
     const issueElements = data.map(issue => {
         const {id, d, last_update, state, data: {
             issueid, summary, description, editor

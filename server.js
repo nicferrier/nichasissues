@@ -55,6 +55,12 @@ async function appInit(listener, crankerRouterUrls, app) {
 
         res.redirect("/login");
     });
+
+    app.get("/issue/context", auth, function (req, res) {
+        res.json({
+            authData: req.authData
+        });
+    });
     
     app.get("/issue", auth, function (req, res) {
         res.sendFile(path.join(__dirname, "index.html"));

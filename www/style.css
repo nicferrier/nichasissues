@@ -2,6 +2,10 @@ body {
     font-family: sans-serif;
 }
 
+#controlpanel {
+    float: right;
+}
+
 form.register {
     display: block;
     width: 40%;
