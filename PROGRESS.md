@@ -19,16 +19,13 @@
 ## people
 
 * ~add a pglogapi for users~
-* make a user - username, email, password
+* ~make a user - username, email, password~
 * update a user
-* authenticate as a user
+* ~authenticate as a user~
 
 ## authentication
 
-choices
-
-* make a session in a new session db
-* make a session attached to the user, normalized into another table?
+* ~make a session attached to the user, normalized into another table?~
 * ~store session in the app somehow~
 
 ## artifacts
