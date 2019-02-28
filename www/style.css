@@ -65,6 +65,10 @@ section table tr td.date,th.date {
     width: 60px;
 }
 
+section table tr td.owner,th.owner {
+    width: 100px;
+}
+
 section table tr td.state,th.state {
     width: 60px;
 }
